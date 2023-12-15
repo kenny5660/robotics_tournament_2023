@@ -15,6 +15,7 @@ setup(
     ],
     entry_points={
         'console_scripts':
-            ['robotics_tournament_2023 = robotics_tournament_2023.__main__:main']
+            ['robotics_tournament_2023 = robotics_tournament_2023.__main__:main',
+             'add_img_dataset = robotics_tournament_2023.add_img_dataset:main']
     }
 )
