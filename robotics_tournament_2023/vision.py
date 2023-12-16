@@ -5,10 +5,8 @@ import argparse
 import cv2.dnn
 import numpy as np
 
-from ultralytics.utils import ASSETS, yaml_load
-from ultralytics.utils.checks import check_yaml
 
-CLASSES = yaml_load(check_yaml('robotics2023_dataset _bottle.yaml'))['names']
+CLASSES = ["BOTTLE","RED","WHITE"]
 colors = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
 
@@ -33,9 +31,9 @@ def draw_bounding_box(img, class_id, confidence, x, y, x_plus_w, y_plus_h):
 
 def main(onnx_model, input_image):
 
+    model: cv2.dnn.Net = cv2.dnn.readNetFromONNX('./robotics.onnx')
     rknn_lite = RKNNLite(verbose=False, verbose_file='./inference.log')
-    sdk_version = rknn_lite.get_sdk_version()
-    print(sdk_version)
+
     ret = rknn_lite.load_rknn('./robotics.rknn')
 
     ret = rknn_lite.init_runtime(core_mask=RKNNLite.NPU_CORE_AUTO)
@@ -54,13 +52,18 @@ def main(onnx_model, input_image):
     # Calculate scale factor
     scale = length / 640
 
-    #resized = cv2.resize(img, IMG_SIZE, interpolation = cv2.INTER_AREA)
+    # resized = cv2.resize(original_image, (640,640), interpolation = cv2.INTER_AREA)
     resized = np.expand_dims(image, 0)
      # Inference
+    blob = cv2.dnn.blobFromImage(image, scalefactor=1 / 255, size=(640, 640), swapRB=True)
+    model.setInput(blob)
+
+    # Perform inference
+    # outputs = model.forward()
     outputs = rknn_lite.inference(inputs=[resized])
 
     # Prepare output array
-    outputs = np.array([cv2.transpose(outputs[0])])
+    outputs = np.array([cv2.transpose(outputs[0][0])])
     rows = outputs.shape[1]
 
     boxes = []
@@ -80,7 +83,7 @@ def main(onnx_model, input_image):
             class_ids.append(maxClassIndex)
 
     # Apply NMS (Non-maximum suppression)
-    result_boxes = cv2.dnn.NMSBoxes(boxes, scores, 0.25, 0.45, 0.5)
+    result_boxes = cv2.dnn.NMSBoxes(boxes, scores, 0.5, 0.1, 0.1)
 
     detections = []
 
@@ -95,14 +98,12 @@ def main(onnx_model, input_image):
             'box': box,
             'scale': scale}
         detections.append(detection)
-        draw_bounding_box(resized, class_ids[index], scores[index], round(box[0] * scale), round(box[1] * scale),
+        draw_bounding_box(original_image, class_ids[index], scores[index], round(box[0] * scale), round(box[1] * scale),
                           round((box[0] + box[2]) * scale), round((box[1] + box[3]) * scale))
-
     # Display the image with bounding boxes
-    cv2.imwrite('result.jpg', resized)
-
+    cv2.imwrite('./result.jpg', original_image)
+    rknn_lite.release()
     return detections
 
 
 det = main(None,None)
-rknn_lite.release()
