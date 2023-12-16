@@ -4,4 +4,4 @@
 *.pt
 yolo_train/runs/*
 datasets/*
-
+*.onnx
