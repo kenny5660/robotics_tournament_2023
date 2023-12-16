@@ -31,5 +31,5 @@ if __name__ == '__main__':
     motorA = Kangaroo_x2_Motor(kanga_1,0,1000)
     motorB = Kangaroo_x2_Motor(kanga_1,1,1000)
     motorC = Kangaroo_x2_Motor(kanga_2,0,1000)
-    omni = omni_wheel_3(motorA,motorB,motorC,radius=100)#100mm
+    omni = omni_wheel_3(motorA,motorB,motorC,radius=60)#100mm
     omni.move((0,100),0)
