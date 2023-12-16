@@ -5,3 +5,4 @@
 yolo_train/runs/*
 datasets/*
 *.onnx
+*.rknn
