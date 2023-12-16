@@ -1,0 +1,8 @@
+
+train: images 
+val: images 
+
+# Classes
+names:
+  0: RED
+  1: WHITE

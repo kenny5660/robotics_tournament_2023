@@ -12,6 +12,7 @@ setup(
     install_requires=[
         'pyserial==3.5',
         'opencv-python==4.8.1.78',
+        'ultralytics==8.0.227'
     ],
     entry_points={
         'console_scripts':
