@@ -1,0 +1,9 @@
+
+train: images 
+val: images 
+
+# Classes
+names:
+  0: BOTTLE
+  1: RED
+  2: WHITE
