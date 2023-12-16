@@ -19,7 +19,7 @@ class Kangaroo_x2:
 
     def bitpackNumber(number):
         i = 0
-        buffer = bytes(range(5))
+        buffer = bytearray(range(5))
         if number < 0 : 
             number = -number 
             number <<= 1 
@@ -52,7 +52,7 @@ class Kangaroo_x2:
         return (crc ^ 0x3fff) & 0xffff
     
     def CmdStart (self, chnl):
-        data_packet = bytes((0,1,2,3,4,5,6,7))
+        data_packet = bytearray((0,1,2,3,4,5,6,7))
         data_packet[0] = self.addr
         data_packet[1] = Kangaroo_x2.kCmdStart
         data_packet[2] = 2; #length
@@ -64,7 +64,7 @@ class Kangaroo_x2:
         self.serial.write(data_packet, 7)
 
     def CmdStart (self, chnl):
-        data_packet = bytes((0,1,2,3,4,5,6,7))
+        data_packet = bytearray(range(7))
         data_packet[0] = self.addr
         data_packet[1] = Kangaroo_x2.kCmdHome
         data_packet[2] = 2; #length
@@ -73,11 +73,12 @@ class Kangaroo_x2:
         crc = Kangaroo_x2.crc14(data_packet, 5)
         data_packet[5] = crc & 0x7F
         data_packet[6] = crc >> 7 & 0x7F
-        self.serial.write(data_packet, 7);	
+        print(data_packet)
+        self.serial.write(data_packet);	
     
     def CmdMoveSpeed(self, chnl, type, speed):
-        data_packet = bytes(range(13))
-        bitpack_Value = bytes(range(5))
+        data_packet = bytearray(range(13))
+        bitpack_Value = bytearray(range(5))
         data_packet[0] = self.addr
         data_packet[1] = Kangaroo_x2.kCmdMove
         data_packet[3] = chnl
@@ -91,7 +92,7 @@ class Kangaroo_x2:
         crc = Kangaroo_x2.crc14(data_packet, 6 + lengthValue)
         data_packet[6 + lengthValue] = crc & 0x7F
         data_packet[7 + lengthValue] = crc >> 7 & 0x7F
-        self.serial.write(data_packet, 8 + lengthValue)
+        self.serial.write(data_packet[:8 + lengthValue])
 
 
 class Kangaroo_x2_Motor(Motor):
@@ -115,7 +116,7 @@ class Kangaroo_x2_Motor(Motor):
         self.kangaroo_drv.CmdMoveSpeed(self.chnl, Kangaroo_x2.kMoveTypeSpeed, 0)
 
 if __name__ == '__main__':
-    serial = pyserial.Serial( 'COM10', 115200)
+    serial = pyserial.Serial( '/dev/ttyS2', 115200)
     kanga_1 = Kangaroo_x2(130,serial)
     kanga_2 = Kangaroo_x2(135,serial)
     kanga_1.CmdStart(0)
