@@ -60,6 +60,6 @@ if __name__ == '__main__':
     motorC = Kangaroo_x2_Motor(kanga_135, '1', 3,inverted=False)
     omni = omni_wheel_3(motorA,motorB,motorC,radius=1)#100mm
     # omni.move((-360,0),0)
-    omni.move2(180,0,90)
+    omni.move2(0,500,0)
     time.sleep(2)
     omni.stop()

@@ -6,3 +6,6 @@ yolo_train/runs/*
 datasets/*
 *.onnx
 *.rknn
+*.jpg
+*.log
+.vscode/settings.json
