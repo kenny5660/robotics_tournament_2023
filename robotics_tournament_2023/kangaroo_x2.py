@@ -1,6 +1,6 @@
 import serial as pyserial
 from robotics_tournament_2023.motor import Motor
-
+import time
 class Kangaroo_x2:
     kCmdStart = 32
     kCmdHome = 34
@@ -44,7 +44,7 @@ class Kangaroo_x2:
         for i in range(length):
             crc ^= data[i] & 0x7f
             for bit in range(7):
-                if (crc & 1): 
+                if (crc & 1) > 0: 
                     crc >>= 1 
                     crc ^= 0x22f0
                 else:
@@ -56,32 +56,31 @@ class Kangaroo_x2:
         data_packet[0] = self.addr
         data_packet[1] = Kangaroo_x2.kCmdStart
         data_packet[2] = 2; #length
-        data_packet[3] = chnl
+        data_packet[3] = ord(chnl)
         data_packet[4] = 0
         crc = Kangaroo_x2.crc14(data_packet, 5)
         data_packet[5] = crc & 0x7F
         data_packet[6] = crc >> 7 & 0x7F
-        self.serial.write(data_packet, 7)
+        self.serial.write(data_packet)
 
-    def CmdStart (self, chnl):
+    def CmdHome (self, chnl):
         data_packet = bytearray(range(7))
         data_packet[0] = self.addr
         data_packet[1] = Kangaroo_x2.kCmdHome
         data_packet[2] = 2; #length
-        data_packet[3] = chnl
+        data_packet[3] = ord(chnl)
         data_packet[4] = 0
         crc = Kangaroo_x2.crc14(data_packet, 5)
         data_packet[5] = crc & 0x7F
         data_packet[6] = crc >> 7 & 0x7F
-        print(data_packet)
-        self.serial.write(data_packet);	
+        self.serial.write(data_packet)
     
     def CmdMoveSpeed(self, chnl, type, speed):
         data_packet = bytearray(range(13))
         bitpack_Value = bytearray(range(5))
         data_packet[0] = self.addr
         data_packet[1] = Kangaroo_x2.kCmdMove
-        data_packet[3] = chnl
+        data_packet[3] = ord(chnl)
         data_packet[4] = 0; #//flags
         data_packet[5] = type   #type
         lengthValue, bitpack_Value = Kangaroo_x2.bitpackNumber(speed)
@@ -109,15 +108,27 @@ class Kangaroo_x2_Motor(Motor):
 
     def MoveContinue(self, speed):
         speed *= self.inverted_coef*self.counts_per_deg
-        speed = max(-1500, min(1500, speed))
-        self.kangaroo_drv.CmdMoveSpeed(self.chnl, Kangaroo_x2.kMoveTypeSpeed, speed)
+        speed = max(-2000, min(2000, speed))
+        self.kangaroo_drv.CmdMoveSpeed(self.chnl, Kangaroo_x2.kMoveTypeSpeed, int(speed))
     
     def stop(self):
         self.kangaroo_drv.CmdMoveSpeed(self.chnl, Kangaroo_x2.kMoveTypeSpeed, 0)
 
 if __name__ == '__main__':
-    serial = pyserial.Serial( '/dev/ttyS2', 115200)
-    kanga_1 = Kangaroo_x2(130,serial)
-    kanga_2 = Kangaroo_x2(135,serial)
-    kanga_1.CmdStart(0)
-    kanga_1.CmdMoveSpeed(0,Kangaroo_x2.kMoveTypeSpeed,100)
+    #serial = pyserial.Serial( '/dev/ttyS2', 115200)
+    serial = pyserial.Serial( 'COM7', 115200)
+    kanga_130 = Kangaroo_x2(130,serial)
+    kanga_135 = Kangaroo_x2(135,serial)
+    motorA = Kangaroo_x2_Motor(kanga_130, '1', 3,inverted=False)
+    motorB = Kangaroo_x2_Motor(kanga_130, '2', 3,inverted=True)
+    motorC = Kangaroo_x2_Motor(kanga_135, '1', 3,inverted=False)
+
+    motorA.MoveContinue(360)
+    motorB.MoveContinue(360)
+    motorC.MoveContinue(360)
+    time.sleep(2)
+    motorA.stop()
+    motorB.stop()
+    motorC.stop()
+
+    
