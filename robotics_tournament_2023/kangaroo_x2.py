@@ -1,5 +1,5 @@
 import serial as pyserial
-
+from robotics_tournament_2023.motor import Motor
 
 class Kangaroo_x2:
     kCmdStart = 32
@@ -93,6 +93,26 @@ class Kangaroo_x2:
         data_packet[7 + lengthValue] = crc >> 7 & 0x7F
         self.serial.write(data_packet, 8 + lengthValue)
 
+
+class Kangaroo_x2_Motor(Motor):
+    def __init__(self, kangaroo_drv,chnl,counts_per_deg,inverted = False) -> None:
+        super().__init__()
+        self.kangaroo_drv = kangaroo_drv
+        self.chnl = chnl
+        self.counts_per_deg = counts_per_deg
+        if inverted:
+            self.inverted_coef =  -1
+        else:
+            self.inverted_coef =  1
+        self.kangaroo_drv.CmdStart(chnl)
+
+    def MoveContinue(self, speed):
+        speed *= self.inverted_coef*self.counts_per_deg
+        speed = max(-1500, min(1500, speed))
+        self.kangaroo_drv.CmdMoveSpeed(self.chnl, Kangaroo_x2.kMoveTypeSpeed, speed)
+    
+    def stop(self):
+        self.kangaroo_drv.CmdMoveSpeed(self.chnl, Kangaroo_x2.kMoveTypeSpeed, 0)
 
 if __name__ == '__main__':
     serial = pyserial.Serial( 'COM10', 115200)
