@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from rknnlite.api import RKNNLite
-from ultralytics.utils import ops
+# from ultralytics.utils import ops
 
 OBJ_THRESH = 0.25
 NMS_THRESH = 0.45
@@ -161,11 +161,11 @@ resized = cv2.resize(img, IMG_SIZE, interpolation = cv2.INTER_AREA)
 resized = np.expand_dims(resized, 0)
  # Inference
 outputs = rknn_lite.inference(inputs=[resized])
-data = ops.non_max_suppression(outputs)
-
-print(data)
-
 
 print(outputs)
-print(outputs[0].shape)
+print(len(outputs))
+
+boxes, classes, scores = post_process(outputs)
+# data = ops.non_max_suppression(outputs)
+print(boxes)
 rknn_lite.release()
