@@ -16,8 +16,37 @@ serial = pyserial.Serial( '/dev/ttyS2', 115200)
 kanga_130 = Kangaroo_x2(130,serial)
 kanga_135 = Kangaroo_x2(135,serial)
 
+# from rplidar import RPLidar
+# lidar = RPLidar('/dev/ttyUSB0')
+# import wiringpi
+
+# lidar.stop()
+# lidar.stop_motor()
+# lidar.disconnect()
+
+# lidar = RPLidar('/dev/ttyUSB0')
+
+# wiringpi.wiringPiSetup()  
+# wiringpi.pinMode(0, wiringpi.GPIO.OUTPUT)
+# wiringpi.digitalWrite(0,1)
+# info = lidar.get_info()
+# print(info)
+# def lidar_update(lidar):
+#     data = lidar.iter_scans()
+#     distance = 5000
+#     for i, scan in enumerate(data):
+#         if i > 1 : break
+#         for pt in scan:
+#             if pt[1] > 175 and pt[1] < 180:
+#                 distance = pt[2]
+#                 break
+#     return distance
+
+# health = lidar.get_health()
+# print(health)
+current_distance = 5000
 def main():
-    global kanga_130,kanga_135
+    global kanga_130,kanga_135,current_distance
     wiringpi.wiringPiSetup()  
     wiringpi.pinMode(BUTTON_START_1, wiringpi.GPIO.INPUT)
     wiringpi.pinMode(BUTTON_START_2, wiringpi.GPIO.INPUT)
@@ -48,8 +77,10 @@ def main():
     counter_motors_start = 0
     omni.stop()
 
-    while(wiringpi.digitalRead(BUTTON_START_2)):
+    while(wiringpi.digitalRead(BUTTON_START_2) and wiringpi.digitalRead(BUTTON_START_1) ):
             time.sleep(0.3)
+            # current_distance = lidar_update(lidar)
+            print(current_distance)
             print("wait button")
             motor_L.stop()
             motor_R.stop()
@@ -74,6 +105,16 @@ def main():
     # omni.stop()
     # motor_L.stop()
     # motor_R.stop()
+    if wiringpi.digitalRead(BUTTON_START_2) == 0:
+        print("left")
+        omni.move2(0,0,300)
+        time.sleep(0.4)
+    if wiringpi.digitalRead(BUTTON_START_1) == 0:
+        print("right")
+        omni.move2(0,0,-300)
+        time.sleep(0.4)
+
+
     omni.move2(0,500,0)
     counter = 0
     while True:
@@ -85,6 +126,7 @@ def main():
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break
+        # current_distance = lidar_update(lidar)
         detections,plot_image = vision.get_detections(frame)
         flow_object(omni,detections)
         counter +=1
@@ -146,7 +188,7 @@ def nearest_object(detections):
     
 counter_flow = 0
 def flow_object(omni,detections):
-    global kanga_130,kanga_135
+    global kanga_130,kanga_135,current_distance
     TIMEOUT = 40
     P = -0.17
     SPEED = 400
