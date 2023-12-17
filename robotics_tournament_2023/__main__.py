@@ -12,9 +12,12 @@ BUTTON_START_1 = 16
 BUTTON_START_2 = 15
 FRAME_CENTER = (320,240)
 
-
+serial = pyserial.Serial( '/dev/ttyS2', 115200)
+kanga_130 = Kangaroo_x2(130,serial)
+kanga_135 = Kangaroo_x2(135,serial)
 
 def main():
+    global kanga_130,kanga_135
     wiringpi.wiringPiSetup()  
     wiringpi.pinMode(BUTTON_START_1, wiringpi.GPIO.INPUT)
     wiringpi.pinMode(BUTTON_START_2, wiringpi.GPIO.INPUT)
@@ -28,9 +31,8 @@ def main():
     servo_top = Servo(21)
 
     print("Hello, World!")
-    serial = pyserial.Serial( '/dev/ttyS2', 115200)
-    kanga_130 = Kangaroo_x2(130,serial)
-    kanga_135 = Kangaroo_x2(135,serial)
+
+
     motorA = Kangaroo_x2_Motor(kanga_130, '1', 3,inverted=False)
     motorB = Kangaroo_x2_Motor(kanga_130, '2', 3,inverted=True)
     motorC = Kangaroo_x2_Motor(kanga_135, '1', 3,inverted=False)
@@ -43,11 +45,17 @@ def main():
         exit()
     vision = Vision('./robotics_nano.rknn')
 
-
+    counter_motors_start = 0
     omni.stop()
 
     while(wiringpi.digitalRead(BUTTON_START_2)):
-        pass
+            time.sleep(0.3)
+            print("wait button")
+            motor_L.stop()
+            motor_R.stop()
+            kanga_130.CmdStart(chnl='1')
+            kanga_130.CmdStart(chnl='2')
+            kanga_135.CmdStart(chnl='1')
 
     kanga_130.CmdStart(chnl='1')
     kanga_130.CmdStart(chnl='2')
@@ -80,6 +88,12 @@ def main():
         detections,plot_image = vision.get_detections(frame)
         flow_object(omni,detections)
         counter +=1
+        counter_motors_start += 1
+        if wiringpi.digitalRead(BUTTON_START_1) == 0:
+            kanga_130.CmdStart(chnl='1')
+            kanga_130.CmdStart(chnl='2')
+            kanga_135.CmdStart(chnl='1')
+
         if (counter >30):
             cv2.imwrite(f'./robot-dataset/original-{int(time.time())}.jpg', original)
             cv2.imwrite(f'./robot-dataset/plot-{int(time.time())}.jpg', plot_image)
@@ -132,7 +146,9 @@ def nearest_object(detections):
     
 counter_flow = 0
 def flow_object(omni,detections):
-    P = -0.15
+    global kanga_130,kanga_135
+    TIMEOUT = 40
+    P = -0.17
     SPEED = 400
     global counter_flow
     # SPEED = 0
@@ -144,12 +160,17 @@ def flow_object(omni,detections):
     else:
         counter_flow +=1
         error = 0
-    if counter_flow < 30:
+    if counter_flow < TIMEOUT:
         omni.move2(0,SPEED,error*P)
-    # else:
-    #     omni.move2(0,SPEED,300)
-    #     if counter_flow > 60:
-    #         counter_flow = 0
+        print(counter_flow)
+    else:
+        kanga_130.CmdStart(chnl='1')
+        kanga_130.CmdStart(chnl='2')
+        kanga_135.CmdStart(chnl='1')
+        print("error_detect")
+        omni.move2(0,-SPEED,-350)
+        if counter_flow > TIMEOUT+5:
+            counter_flow = 0
 
 
 if __name__ == '__main__':
