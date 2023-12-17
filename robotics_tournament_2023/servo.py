@@ -11,6 +11,7 @@ class Servo:
 
     def move_angle(self,angle):
         pulse = 50 + angle*(180 / 200)
+        print("servo",pulse)
         wiringpi.pwmWrite(pin=self.pin, value=int(pulse))
 
 
